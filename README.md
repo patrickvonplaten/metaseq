@@ -35,6 +35,7 @@ tokenizer.save_pretrained("./")
 
 ```
 wget https://dl.fbaipublicfiles.com/opt/v1_20220502/125m/reshard-model_part-0.pt
+wget https://dl.fbaipublicfiles.com/opt/v1_20220502/125m/reshard-model_part-1.pt
 ```
 
 5. Try to load the model withe the following Python code:
