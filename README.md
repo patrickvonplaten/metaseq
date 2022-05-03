@@ -29,6 +29,7 @@ Now load the HF GPT2 tokenizer and save it:
 from transformers import GPT2Tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 tokenizer.save_pretrained("./")
+```
 
 4. Download the small model as shown [here](https://github.com/facebookresearch/metaseq/tree/main/projects/OPT).
 
