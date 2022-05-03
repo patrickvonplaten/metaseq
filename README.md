@@ -43,7 +43,7 @@ wget https://dl.fbaipublicfiles.com/opt/v1_20220502/125m/reshard-model_part-0.pt
 #!/usr/bin/env python3
 from metaseq import checkpoint_utils
 
-model = checkpoint_utils.load_model_ensemble_and_task(["./reshard-model_part-0.pt"], arg_overrides={"vocab_filename": "./vocab.json", "merges_filename": "./merges.txt"})
+model = checkpoint_utils.load_model_ensemble_and_task(["./reshard-model_part-0.pt", "reshard-model_part-1.pt"], arg_overrides={"vocab_filename": "/home/patrick_huggingface_co/add_opt/vocab.json", "merges_filename": "/home/patrick_huggingface_co/add_opt/merges.txt"})
 ```
 
 6. You'll probs see the following error coming from the Megatron-LM library:
