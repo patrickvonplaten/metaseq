@@ -75,7 +75,7 @@ class StreamingLanguageModelingConfig(MetaseqDataclass):
         default=None, metadata={"help": "max number of tokens in the target sequence"}
     )
     final_vocab_size: Optional[int] = field(
-        default=None, metadata={"help": "force vocab size to this"}
+        default=50272, metadata={"help": "force vocab size to this"}
     )
     multicorpus_sampling_alpha: Optional[float] = field(
         default=1.0,
@@ -114,18 +114,18 @@ class StreamingLanguageModelingTask(LegacyTask):
             args.vocab_filename, args.merges_filename
         )
 
+
         if max(args.update_freq) > 1:
             raise NotImplementedError(
                 "--update-freq is not compatible with StreamingLanguageModelingTask"
             )
 
-        self.eod = self.tokenizer.token_to_id(args.end_of_document_symbol)
+        self.eod = self.tokenizer.token_to_id("<|endoftext|>")
         if self.eod is None:
             # This will be executed for old models that do not have the args.end_of_document_symbol explicitly set
             # and do not use <s/> (the default) but <EOS>
             self.eod = self.tokenizer.token_to_id("<EOS>")
 
-        self.eod = 50256
         assert (
             self.eod is not None
         ), "Cannot find end-of-document symbol ({}) in tokenizer".format(
@@ -136,28 +136,28 @@ class StreamingLanguageModelingTask(LegacyTask):
         self.dictionary = Dictionary()
         tok_vocab_size = self.tokenizer.get_vocab_size()
 
-        # for id in range(self.dictionary.nspecial, tok_vocab_size):
-        #     self.dictionary.add_symbol(self.tokenizer.id_to_token(id))
-        # final_vocab_size = args.final_vocab_size
-        # # final_vocab_size = 51200 for roberta dictionary
-        # if final_vocab_size is not None:
-        #     if final_vocab_size < tok_vocab_size:
-        #         raise ValueError(
-        #             f"incompatible: {final_vocab_size}, tok_vocab_size: {tok_vocab_size}"
-        #         )
-        #     self.dictionary.pad_to_multiple_(final_vocab_size)
-        # else:
-        #     self.dictionary.pad_to_multiple_(8)
+        for id in range(self.dictionary.nspecial, tok_vocab_size):
+            self.dictionary.add_symbol(self.tokenizer.id_to_token(id))
+        final_vocab_size = args.final_vocab_size
+        # final_vocab_size = 51200 for roberta dictionary
+        if final_vocab_size is not None:
+            if final_vocab_size < tok_vocab_size:
+                raise ValueError(
+                    f"incompatible: {final_vocab_size}, tok_vocab_size: {tok_vocab_size}"
+                )
+            self.dictionary.pad_to_multiple_(final_vocab_size)
+        else:
+            self.dictionary.pad_to_multiple_(8)
 
-        # # confirm that metaseq dictionary and BPE have matching special symbols
-        # assert self.dictionary.bos_index == 0
-        # assert self.tokenizer.id_to_token(0) in {"<BOS>", "<s>"}
-        # assert self.dictionary.pad_index == 1
-        # assert self.tokenizer.id_to_token(1) in {"<PAD>", "<pad>"}
-        # assert self.dictionary.eos_index == 2
-        # assert self.tokenizer.id_to_token(2) in {"<EOS>", "</s>"}
-        # assert self.dictionary.unk_index == 3
-        # assert self.tokenizer.id_to_token(3) in {"<UNK>", "<unk>"}
+        # confirm that metaseq dictionary and BPE have matching special symbols
+#        assert self.dictionary.bos_index == 0
+#        assert self.tokenizer.id_to_token(0) in {"<BOS>", "<s>"}
+#        assert self.dictionary.pad_index == 1
+#        assert self.tokenizer.id_to_token(1) in {"<PAD>", "<pad>"}
+#        assert self.dictionary.eos_index == 2
+#        assert self.tokenizer.id_to_token(2) in {"<EOS>", "</s>"}
+#        assert self.dictionary.unk_index == 3
+#        assert self.tokenizer.id_to_token(3) in {"<UNK>", "<unk>"}
 
     @classmethod
     def setup_task(cls, args, **kwargs):
