@@ -34,59 +34,53 @@ tokenizer.save_pretrained("./")
 4. Download the small model as shown [here](https://github.com/facebookresearch/metaseq/tree/main/projects/OPT).
 
 ```
-wget https://dl.fbaipublicfiles.com/opt/v1_20220502/125m/reshard-model_part-0.pt
-wget https://dl.fbaipublicfiles.com/opt/v1_20220502/125m/reshard-model_part-1.pt
+wget https://dl.fbaipublicfiles.com/opt/v1_20220502/350m/reshard.pt
 ```
 
 5. Try to load the model withe the following Python code:
 
 ```py
-#!/usr/bin/env python3
+import os
+
+from megatron import get_args
+from megatron.initialize import initialize_megatron
 from metaseq import checkpoint_utils
 
-model = checkpoint_utils.load_model_ensemble_and_task(["./reshard-model_part-0.pt", "reshard-model_part-1.pt"], arg_overrides={"vocab_filename": "/home/patrick_huggingface_co/add_opt/vocab.json", "merges_filename": "/home/patrick_huggingface_co/add_opt/merges.txt"})
+path = "/home/patrick/add_opt"
+
+# arguments taken from: https://arxiv.org/pdf/2205.01068.pdf | table 1
+initialize_megatron(args_defaults={
+    "micro_batch_size": 1, 
+    "num_layers": 24, 
+    "hidden_size": 1024, 
+    "num_attention_heads": 16,
+    "max_position_embeddings": 2048, # TODO check if it is the correct args
+    "encoder_seq_length": 2048 # TODO check if it is the correct args
+})
+
+model = checkpoint_utils.load_model_ensemble_and_task(
+#    [os.path.join(path, "reshard-model_part-0.pt"), os.path.join(path, "reshard-model_part-1.pt")],
+    [os.path.join(path, "reshard.pt")],
+    arg_overrides={
+        "vocab_filename": os.path.join(path, "vocab.json"),
+        "merges_filename": os.path.join(path, "merges.txt"),
+    }
+)
+import ipdb; ipdb.set_trace()
 ```
 
-6. You'll probs see the following error coming from the Megatron-LM library:
+6. Now run:
 
-```
-No CUDA runtime is found, using CUDA_HOME='/usr'
-Traceback (most recent call last):
-  File "/home/patrick_huggingface_co/add_opt/./load_model.py", line 5, in <module>
-    model = checkpoint_utils.load_model_ensemble_and_task(["./reshard-model_part-0.pt"], arg_overrides={"vocab_filename": "/home/patrick_huggingface_co/add_opt/vocab.json", "merges_filename": "/home/patrick_huggingface_co/add_opt/merges.txt"})
-  File "/home/patrick_huggingface_co/metaseq/metaseq/checkpoint_utils.py", line 506, in load_model_ensemble_and_task
-    model = task.build_model(cfg.model)
-  File "/home/patrick_huggingface_co/metaseq/metaseq/tasks/base_task.py", line 560, in build_model
-    model = models.build_model(args, self)
-  File "/home/patrick_huggingface_co/metaseq/metaseq/models/__init__.py", line 89, in build_model
-    return model.build_model(cfg, task)
-  File "/home/patrick_huggingface_co/metaseq/metaseq/model_parallel/models/transformer_lm.py", line 47, in build_model
-    embed_tokens = cls.build_embedding(
-  File "/home/patrick_huggingface_co/metaseq/metaseq/model_parallel/models/transformer_lm.py", line 82, in build_embedding
-    embed_tokens = VocabParallelEmbedding(
-  File "/home/patrick_huggingface_co/Megatron-LM/megatron/mpu/layers.py", line 190, in __init__
-    self.tensor_model_parallel_size = get_tensor_model_parallel_world_size()
-  File "/home/patrick_huggingface_co/Megatron-LM/megatron/mpu/initialize.py", line 258, in get_tensor_model_parallel_world_size
-    return torch.distributed.get_world_size(group=get_tensor_model_parallel_group())
-  File "/home/patrick_huggingface_co/Megatron-LM/megatron/mpu/initialize.py", line 215, in get_tensor_model_parallel_group
-    assert _TENSOR_MODEL_PARALLEL_GROUP is not None, \
-AssertionError: intra_layer_model parallel group is not initialized
-```
-
-7. Run:
-```
+```python
 torchrun run_model.py --pipeline-model-parallel-size 1 --tensor-model-parallel-size 1
 ```
+
 and you will get the following error:
+
 ```
 AssertionError: pipeline_model parallel group is not initialized
 ```
+
 You can probably comment [this line](https://github.com/ngoyal2707/Megatron-LM/blob/ae0b844c1f6725c3433a95e42cac760b3885170b/megatron/initialize.py#L65) since the rank is only needed to initialize different random seeds accross pp ranks.
 
-8. After commenting the line run again the script and you'll get:
-```
-...
-coder.layer_norm.weight", "decoder.layer_norm.bias", "decoder.output_projection.weight". 
-        Unexpected key(s) in state_dict: "flat_param_0". 
-```
-The `state_dict` of the model contains only a single key with all parameters (~65M params each shard). How to convert this state dict to a normal one?
+7. After commenting the line run again the script and the model should be loaded correctly.
