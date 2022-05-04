@@ -68,3 +68,19 @@ model = checkpoint_utils.load_model_ensemble_and_task(
 )
 import ipdb; ipdb.set_trace()
 ```
+
+6. Now run:
+
+```python
+torchrun run_model.py --pipeline-model-parallel-size 1 --tensor-model-parallel-size 1
+```
+
+and you will get the following error:
+
+```
+AssertionError: pipeline_model parallel group is not initialized
+```
+
+You can probably comment [this line](https://github.com/ngoyal2707/Megatron-LM/blob/ae0b844c1f6725c3433a95e42cac760b3885170b/megatron/initialize.py#L65) since the rank is only needed to initialize different random seeds accross pp ranks.
+
+7. After commenting the line run again the script and the model should be loaded correctly.
