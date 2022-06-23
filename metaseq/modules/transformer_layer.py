@@ -245,7 +245,7 @@ class TransformerDecoderLayer(nn.Module):
         add_zero_attn=False,
     ):
         super().__init__()
-        load_megatron_fused_kernel()
+#        load_megatron_fused_kernel()
         self.args = args
         self.embed_dim = args.decoder_embed_dim
         self.dropout_module = Dropout(args.dropout, module_name=self.__class__.__name__)
@@ -269,6 +269,7 @@ class TransformerDecoderLayer(nn.Module):
         initialize_params_on_gpu = getattr(
             args, "tensor_parallel_init_model_on_gpu", False
         )
+        initialize_params_on_gpu = False
         if initialize_params_on_gpu and self.attn_ln is not None:
             self.attn_ln = utils.floating_point_precision_convertor(
                 self.attn_ln.cuda(),
@@ -416,9 +417,10 @@ class TransformerDecoderLayer(nn.Module):
             add_bias_kv=add_bias_kv,
             add_zero_attn=add_zero_attn,
             self_attention=not getattr(args, "cross_self_attention", False),
-            initialize_params_on_gpu=getattr(
-                args, "tensor_parallel_init_model_on_gpu", False
-            ),
+            initialize_params_on_gpu=False,
+#            initialize_params_on_gpu=getattr(
+#                args, "tensor_parallel_init_model_on_gpu", False
+#            ),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -429,9 +431,10 @@ class TransformerDecoderLayer(nn.Module):
             vdim=getattr(args, "encoder_embed_dim", None),
             dropout=args.attention_dropout,
             encoder_decoder_attention=True,
-            initialize_params_on_gpu=getattr(
-                args, "tensor_parallel_init_model_on_gpu", False
-            ),
+            initialize_params_on_gpu=False,
+#            initialize_params_on_gpu=getattr(
+#                args, "tensor_parallel_init_model_on_gpu", False
+#            ),
         )
 
     def prepare_for_onnx_export_(self):

@@ -388,6 +388,7 @@ class TransformerDecoder(IncrementalDecoder):
         initialize_params_on_gpu = getattr(
             args, "tensor_parallel_init_model_on_gpu", False
         )
+        initialize_params_on_gpu = False
 
         self.embed_positions = (
             PositionalEmbedding(
@@ -940,6 +941,7 @@ def Embedding(
     num_embeddings, embedding_dim, padding_idx, initialize_params_on_gpu=False
 ):
     # Passing weights initialized on GPU.
+    initialize_params_on_gpu = False
     device = torch.cuda.current_device() if initialize_params_on_gpu else None
     dtype = torch.half if initialize_params_on_gpu else torch.float
     weight = torch.empty(num_embeddings, embedding_dim, device=device, dtype=dtype)

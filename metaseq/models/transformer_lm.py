@@ -225,9 +225,10 @@ class TransformerLanguageModel(LanguageModel):
                 len(dictionary),
                 embed_dim,
                 dictionary.pad(),
-                initialize_params_on_gpu=getattr(
-                    args, "tensor_parallel_init_model_on_gpu", False
-                ),
+                initialize_params_on_gpu=False,
+#                initialize_params_on_gpu=getattr(
+#                    args, "tensor_parallel_init_model_on_gpu", False
+#                ),
             )
 
 
